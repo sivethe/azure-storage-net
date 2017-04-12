@@ -88,6 +88,9 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
                     case TableOperationType.InsertOrMerge:
                         return await this.HandleInsertOrMergeAsync(operation, client, table, requestOptions, operationContext);
 
+                    case TableOperationType.Merge:
+                        return await this.HandleMergeAsync(operation, client, table, requestOptions, operationContext);
+
                     case TableOperationType.Delete:
                         return await this.HandleDeleteAsync(operation, client, table, requestOptions, operationContext);
 
