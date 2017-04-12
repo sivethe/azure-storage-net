@@ -21,6 +21,7 @@ namespace Microsoft.WindowsAzure.Storage.Table
     using Microsoft.WindowsAzure.Storage.Core.Executor;
     using Microsoft.WindowsAzure.Storage.Core.Util;
     using Microsoft.WindowsAzure.Storage.Shared.Protocol;
+    using Microsoft.WindowsAzure.Storage.Table.Extensions;
     using Microsoft.WindowsAzure.Storage.Table.Protocol;
     using Microsoft.WindowsAzure.Storage.Table.Queryable;
     using System;
@@ -1128,7 +1129,16 @@ namespace Microsoft.WindowsAzure.Storage.Table
         /// <param name="asyncResult">An <see cref="IAsyncResult"/> that references the pending asynchronous operation.</param>
         public virtual void EndCreate(IAsyncResult asyncResult)
         {
-            Executor.EndExecuteAsync<TableResult>(asyncResult);
+            WrappedAsyncResult<TableResult, IOperationExecutor> wrappedAsyncResult 
+                = asyncResult as WrappedAsyncResult<TableResult, IOperationExecutor>;
+            if (wrappedAsyncResult != null)
+            {
+                wrappedAsyncResult.Executor.EndExecute(asyncResult);
+            }
+            else
+            {
+                Executor.EndExecuteAsync<TableResult>(asyncResult);
+            }
         }
 
 #if TASK
@@ -1266,11 +1276,10 @@ namespace Microsoft.WindowsAzure.Storage.Table
         /// <returns><c>true</c> if table was created; otherwise, <c>false</c>.</returns>
         public virtual bool EndCreateIfNotExists(IAsyncResult asyncResult)
         {
-            ExecutionState<TableResult> executionResult = asyncResult as ExecutionState<TableResult>;
-            CommonUtility.AssertNotNull("AsyncResult", executionResult);
+            CommonUtility.AssertNotNull("AsyncResult", asyncResult);
             try
             {
-                this.EndCreate(executionResult);
+                this.EndCreate(asyncResult);
                 return true;
             }
             catch (StorageException e)
@@ -1409,7 +1418,16 @@ namespace Microsoft.WindowsAzure.Storage.Table
         /// <param name="asyncResult">An <see cref="IAsyncResult"/> that references the pending asynchronous operation.</param>
         public virtual void EndDelete(IAsyncResult asyncResult)
         {
-            Executor.EndExecuteAsync<TableResult>(asyncResult);
+            WrappedAsyncResult<TableResult, IOperationExecutor> wrappedAsyncResult
+                = asyncResult as WrappedAsyncResult<TableResult, IOperationExecutor>;
+            if (wrappedAsyncResult != null)
+            {
+                wrappedAsyncResult.Executor.EndExecute(asyncResult);
+            }
+            else
+            {
+                Executor.EndExecuteAsync<TableResult>(asyncResult);
+            }
         }
 
 #if TASK
@@ -1800,7 +1818,12 @@ namespace Microsoft.WindowsAzure.Storage.Table
         /// <returns><c>true</c> if table exists; otherwise, <c>false</c>.</returns>
         public virtual bool EndExists(IAsyncResult asyncResult)
         {
-            TableResult res = Executor.EndExecuteAsync<TableResult>(asyncResult);
+            WrappedAsyncResult<TableResult, IOperationExecutor> wrappedAsyncResult
+                = asyncResult as WrappedAsyncResult<TableResult, IOperationExecutor>;
+
+            TableResult res = wrappedAsyncResult != null 
+                ? wrappedAsyncResult.Executor.EndExecute(asyncResult) 
+                : Executor.EndExecuteAsync<TableResult>(asyncResult);
 
             // Only other option is not found, other status codes will throw prior to this.            
             return res.HttpStatusCode == (int)HttpStatusCode.OK;

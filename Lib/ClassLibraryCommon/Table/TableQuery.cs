@@ -21,6 +21,7 @@ namespace Microsoft.WindowsAzure.Storage.Table
     using Microsoft.WindowsAzure.Storage.Core.Executor;
     using Microsoft.WindowsAzure.Storage.Core.Util;
     using Microsoft.WindowsAzure.Storage.Shared.Protocol;
+    using Microsoft.WindowsAzure.Storage.Table.Extensions;
     using Microsoft.WindowsAzure.Storage.Table.Protocol;
     using Microsoft.WindowsAzure.Storage.Table.Queryable;
     using System;
@@ -83,6 +84,12 @@ namespace Microsoft.WindowsAzure.Storage.Table
         }
 
         #endregion
+
+        #region Properties
+
+        internal IQueryExecutor<TElement> QueryExecutor { get; set; }
+
+            #endregion
 
         #region Public Execution Methods
 
@@ -447,9 +454,15 @@ namespace Microsoft.WindowsAzure.Storage.Table
             TableRequestOptions modifiedOptions = TableRequestOptions.ApplyDefaults(requestOptions, client);
             operationContext = operationContext ?? new OperationContext();
 
-            RESTCommand<TableQuerySegment<TElement>> cmdToExecute = QueryImpl(this, token, client, table, EntityUtilities.ResolveEntityByType<TElement>, modifiedOptions);
-
-            return Executor.ExecuteSync(cmdToExecute, modifiedOptions.RetryPolicy, operationContext);
+            if (client.IsStellarEndpoint())
+            {
+                return this.QueryExecutor.ExecuteQuerySegmentedInternal(this, token, client, table, requestOptions, operationContext);
+            }
+            else
+            {
+                RESTCommand<TableQuerySegment<TElement>> cmdToExecute = QueryImpl(this, token, client, table, EntityUtilities.ResolveEntityByType<TElement>, modifiedOptions);
+                return Executor.ExecuteSync(cmdToExecute, modifiedOptions.RetryPolicy, operationContext);
+            }
         } 
 #endif
 
@@ -460,12 +473,19 @@ namespace Microsoft.WindowsAzure.Storage.Table
             TableRequestOptions modifiedOptions = TableRequestOptions.ApplyDefaults(requestOptions, client);
             operationContext = operationContext ?? new OperationContext();
 
-            return Executor.BeginExecuteAsync(
+            if (client.IsStellarEndpoint())
+            {
+                return this.QueryExecutor.BeginExecuteQuerySegmentedInternal(this, token, client, table, requestOptions, operationContext, callback, state);
+            }
+            else
+            {
+                return Executor.BeginExecuteAsync(
                                           QueryImpl(this, token, client, table, EntityUtilities.ResolveEntityByType<TElement>, modifiedOptions),
                                           modifiedOptions.RetryPolicy,
                                           operationContext,
                                           callback,
                                           state);
+            }
         }
 
         internal TableQuerySegment<TElement> EndExecuteQuerySegmentedInternal(IAsyncResult asyncResult)

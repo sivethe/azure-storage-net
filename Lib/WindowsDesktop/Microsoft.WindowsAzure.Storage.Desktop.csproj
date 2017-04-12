@@ -43,6 +43,10 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.Azure.Documents.Client, Version=1.13.1, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\packages\Microsoft.Azure.DocumentDB.1.13.1\lib\net45\Microsoft.Azure.Documents.Client.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Azure.KeyVault.Core, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\packages\Microsoft.Azure.KeyVault.Core.1.0.0\lib\net40\Microsoft.Azure.KeyVault.Core.dll</HintPath>
@@ -64,6 +68,7 @@
       <HintPath>..\..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -77,6 +82,26 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Table\Extensions\CloudTableClient.Premium.cs" />
+    <Compile Include="Table\Extensions\DocumentHelpers.cs" />
+    <Compile Include="Table\Extensions\EntityHelpers.cs" />
+    <Compile Include="Table\Extensions\Entity\ITableEntityReader.cs" />
+    <Compile Include="Table\Extensions\Entity\ITableEntityWriter.cs" />
+    <Compile Include="Table\Extensions\Entity\JsonScanner.cs" />
+    <Compile Include="Table\Extensions\Entity\JsonToken.cs" />
+    <Compile Include="Table\Extensions\Entity\TableEntityReader.cs" />
+    <Compile Include="Table\Extensions\Entity\TableEntityReaderWriterState.cs" />
+    <Compile Include="Table\Extensions\Entity\TableEntityWriter.cs" />
+    <Compile Include="Table\Extensions\Entity\TableEntityWriterContext.cs" />
+    <Compile Include="Table\Extensions\Entity\Util.cs" />
+    <Compile Include="Table\Extensions\StellarConstants.cs" />
+    <Compile Include="Table\Extensions\StellarOperationExecutor.cs" />
+    <Compile Include="Table\Extensions\StellarQueryExecutor.cs" />
+    <Compile Include="Table\Extensions\CloudTableExtensions.cs" />
+    <Compile Include="Table\Extensions\TableErrorCodeMessageString.cs" />
+    <Compile Include="Table\Extensions\WrappedAsyncResult.cs" />
+    <Compile Include="Table\IOperationExecutor.cs" />
+    <Compile Include="Table\IQueryExecutor.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\ClassLibraryCommon\ICancellableAsyncResult.cs" />
