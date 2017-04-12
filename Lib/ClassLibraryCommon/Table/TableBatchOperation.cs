@@ -21,6 +21,7 @@ namespace Microsoft.WindowsAzure.Storage.Table
     using Microsoft.WindowsAzure.Storage.Core.Executor;
     using Microsoft.WindowsAzure.Storage.Core.Util;
     using Microsoft.WindowsAzure.Storage.Shared.Protocol;
+    using Microsoft.WindowsAzure.Storage.Table.Extensions;
     using Microsoft.WindowsAzure.Storage.Table.Protocol;
     using System;
     using System.Collections.Generic;
@@ -90,7 +91,15 @@ namespace Microsoft.WindowsAzure.Storage.Table
                 throw new InvalidOperationException(SR.BatchExceededMaximumNumberOfOperations);
             }
 
-            return Executor.ExecuteSync(BatchImpl(this, client, table, modifiedOptions), modifiedOptions.RetryPolicy, operationContext);
+            if (client.IsStellarEndpoint())
+            {
+                IBatchOperationExecutor operationExecutor = GetBatchOperationExecutor(client);
+                return operationExecutor.Execute(this, client, table, requestOptions, operationContext);
+            }
+            else
+            {
+                return Executor.ExecuteSync(BatchImpl(this, client, table, modifiedOptions), modifiedOptions.RetryPolicy, operationContext);
+            }
         }
 #endif
 
@@ -112,17 +121,26 @@ namespace Microsoft.WindowsAzure.Storage.Table
                 throw new InvalidOperationException(SR.BatchExceededMaximumNumberOfOperations);
             }
 
-            return Executor.BeginExecuteAsync(
-                                          BatchImpl(this, client, table, modifiedOptions),
-                                          modifiedOptions.RetryPolicy,
-                                          operationContext,
-                                          callback,
-                                          state);
+            if (client.IsStellarEndpoint())
+            {
+                IBatchOperationExecutor operationExecutor = GetBatchOperationExecutor(client);
+                return operationExecutor.BeginExecute(this, client, table, requestOptions, operationContext, callback, state);
+            }
+            else
+            {
+                return Executor.BeginExecuteAsync(
+                    BatchImpl(this, client, table, modifiedOptions),
+                    modifiedOptions.RetryPolicy,
+                    operationContext,
+                    callback,
+                    state);
+            }
         }
 
         internal static IList<TableResult> EndExecute(IAsyncResult asyncResult)
         {
-            return Executor.EndExecuteAsync<IList<TableResult>>(asyncResult);
+            WrappedAsyncResult<IList<TableResult>, IBatchOperationExecutor> wrappedAsyncResult = (WrappedAsyncResult<IList<TableResult>, IBatchOperationExecutor>)asyncResult;
+            return wrappedAsyncResult != null ? wrappedAsyncResult.Executor.EndExecute(asyncResult) : Executor.EndExecuteAsync<IList<TableResult>>(asyncResult);
         }
 
         private static RESTCommand<IList<TableResult>> BatchImpl(TableBatchOperation batch, CloudTableClient client, CloudTable table, TableRequestOptions requestOptions)
@@ -148,6 +166,16 @@ namespace Microsoft.WindowsAzure.Storage.Table
             batchCmd.RecoveryAction = (cmd, ex, ctx) => results.Clear();
 
             return batchCmd;
+        }
+
+        private static IBatchOperationExecutor GetBatchOperationExecutor(CloudTableClient client)
+        {
+            if (client.IsStellarEndpoint())
+            {
+                return new StellarBatchExecutor();
+            }
+
+            throw new InvalidOperationException("BatchOperatorExecutor is not defined for native table accounts");
         }
     }
 }

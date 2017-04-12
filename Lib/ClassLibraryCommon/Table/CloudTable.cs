@@ -206,7 +206,11 @@ namespace Microsoft.WindowsAzure.Storage.Table
         /// <returns>A enumerable collection of type <see cref="TableResult"/> that contains the results, in order, of each operation in the <see cref="TableBatchOperation"/> on the table.</returns>
         public virtual IList<TableResult> EndExecuteBatch(IAsyncResult asyncResult)
         {
-            return Executor.EndExecuteAsync<IList<TableResult>>(asyncResult);
+            WrappedAsyncResult<IList<TableResult>, IBatchOperationExecutor> wrappedAsyncResult
+                = asyncResult as WrappedAsyncResult<IList<TableResult>, IBatchOperationExecutor>;
+            return wrappedAsyncResult != null 
+                ? wrappedAsyncResult.Executor.EndExecute(asyncResult) 
+                : Executor.EndExecuteAsync<IList<TableResult>>(asyncResult);
         }
 
 #if TASK
