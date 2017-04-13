@@ -20,9 +20,9 @@ namespace Microsoft.WindowsAzure.Storage.Table
     using System;
     using Microsoft.WindowsAzure.Storage.Core.Executor;
 
-    internal sealed class TableQueryExecutor<TElement> : IQueryExecutor<TElement>
+    internal sealed class TableQueryExecutor<TResult, TElement> : IQueryExecutor<TResult, TElement>
     {
-        public TableQuerySegment<TElement> ExecuteQuerySegmented(
+        public TableQuerySegment<TResult> ExecuteQuerySegmented(
             TableQuery<TElement> query, 
             TableContinuationToken token, 
             CloudTableClient client,
@@ -30,7 +30,7 @@ namespace Microsoft.WindowsAzure.Storage.Table
             TableRequestOptions requestOptions, 
             OperationContext operationContext)
         {
-            RESTCommand<TableQuerySegment<TElement>> cmdToExecute = query.QueryImpl<TElement, TElement>(query, token, client, table, EntityUtilities.ResolveEntityByType<TElement>, requestOptions);
+            RESTCommand<TableQuerySegment<TResult>> cmdToExecute = query.QueryImpl<TElement, TResult>(query, token, client, table, EntityUtilities.ResolveEntityByType<TResult>, requestOptions);
             return Executor.ExecuteSync(cmdToExecute, requestOptions.RetryPolicy, operationContext);
         }
 
@@ -45,16 +45,16 @@ namespace Microsoft.WindowsAzure.Storage.Table
             object state)
         {
             return Executor.BeginExecuteAsync(
-                                          query.QueryImpl<TElement, TElement>(query, token, client, table, EntityUtilities.ResolveEntityByType<TElement>, requestOptions),
+                                          query.QueryImpl<TElement, TResult>(query, token, client, table, EntityUtilities.ResolveEntityByType<TResult>, requestOptions),
                                           requestOptions.RetryPolicy,
                                           operationContext,
                                           callback,
                                           state);
         }
 
-        public TableQuerySegment<TElement> EndExecute(IAsyncResult asyncResult)
+        public TableQuerySegment<TResult> EndExecute(IAsyncResult asyncResult)
         {
-            return Executor.EndExecuteAsync<TableQuerySegment<TElement>>(asyncResult);
+            return Executor.EndExecuteAsync<TableQuerySegment<TResult>>(asyncResult);
         }
     }
 }

@@ -26,9 +26,9 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
     using Microsoft.Azure.Documents.Linq;
     using Microsoft.WindowsAzure.Storage.Table.Protocol;
 
-    internal sealed class StellarQueryExecutor<TElement> : IQueryExecutor<TElement>
+    internal sealed class StellarQueryExecutor<TResult, TElement> : IQueryExecutor<TResult, TElement>
     {
-        public TableQuerySegment<TElement> ExecuteQuerySegmented(
+        public TableQuerySegment<TResult> ExecuteQuerySegmented(
             TableQuery<TElement> query,
             TableContinuationToken token, 
             CloudTableClient client, 
@@ -50,18 +50,18 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
             AsyncCallback callback,
             object state)
         {
-            return new WrappedAsyncResult<TableQuerySegment<TElement>>(
+            return new WrappedAsyncResult<TableQuerySegment<TResult>>(
                 t => ExecuteQuerySegmentedInternalAsync(query, token, client, table, requestOptions, operationContext),
                 this,
                 callback, 
                 state);
         }
 
-        public TableQuerySegment<TElement> EndExecute(IAsyncResult asyncResult)
+        public TableQuerySegment<TResult> EndExecute(IAsyncResult asyncResult)
         {
             try
             {
-                return ((WrappedAsyncResult<TableQuerySegment<TElement>>)asyncResult).Result;
+                return ((WrappedAsyncResult<TableQuerySegment<TResult>>)asyncResult).Result;
             }
             catch (AggregateException ex)
             {
@@ -113,7 +113,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
             return result;
         }
 
-        private async Task<TableQuerySegment<TElement>> ExecuteQuerySegmentedInternalAsync(
+        private async Task<TableQuerySegment<TResult>> ExecuteQuerySegmentedInternalAsync(
             TableQuery<TElement> query,
             TableContinuationToken token,
             CloudTableClient client,
@@ -123,7 +123,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
         {
             if (string.Equals(table.Name, TableConstants.TableServiceTablesName, StringComparison.OrdinalIgnoreCase))
             {
-                return await this.QueryCollectionsAsync<TElement>(query, token, client, table, requestOptions, operationContext);
+                return await this.QueryCollectionsAsync<TResult>(query, token, client, table, requestOptions, operationContext);
             }
 
             throw new NotImplementedException();

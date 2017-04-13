@@ -43,10 +43,10 @@ namespace Microsoft.WindowsAzure.Storage.Table
             object state);
     }
 
-    internal interface IQueryExecutor<TResult> : IExecutor<TableQuerySegment<TResult>>
+    internal interface IQueryExecutor<TResult, TInput> : IExecutor<TableQuerySegment<TResult>>
     {
         TableQuerySegment<TResult> ExecuteQuerySegmented(
-           TableQuery<TResult> query,
+           TableQuery<TInput> query,
            TableContinuationToken token,
            CloudTableClient client,
            CloudTable table,
@@ -54,7 +54,7 @@ namespace Microsoft.WindowsAzure.Storage.Table
            OperationContext operationContext);
 
         ICancellableAsyncResult BeginExecuteQuerySegmented(
-            TableQuery<TResult> query,
+            TableQuery<TInput> query,
             TableContinuationToken token,
             CloudTableClient client,
             CloudTable table,

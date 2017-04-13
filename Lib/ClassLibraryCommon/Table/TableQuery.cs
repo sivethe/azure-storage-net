@@ -84,13 +84,7 @@ namespace Microsoft.WindowsAzure.Storage.Table
         }
 
         #endregion
-
-        #region Properties
-
-        internal IQueryExecutor<TElement> QueryExecutor { get; set; }
-
-            #endregion
-
+        
         #region Public Execution Methods
 
         /// <summary>
@@ -454,7 +448,7 @@ namespace Microsoft.WindowsAzure.Storage.Table
             TableRequestOptions modifiedOptions = TableRequestOptions.ApplyDefaults(requestOptions, client);
             operationContext = operationContext ?? new OperationContext();
             
-            IQueryExecutor<TElement> queryExecutor = GetExecutor<TElement>(client);
+            IQueryExecutor<TElement, TElement> queryExecutor = GetExecutor<TElement>(client);
             return queryExecutor.ExecuteQuerySegmented(this, token, client, table, modifiedOptions, operationContext);
         } 
 #endif
@@ -466,13 +460,14 @@ namespace Microsoft.WindowsAzure.Storage.Table
             TableRequestOptions modifiedOptions = TableRequestOptions.ApplyDefaults(requestOptions, client);
             operationContext = operationContext ?? new OperationContext();
 
-            IQueryExecutor<TElement> queryExecutor = GetExecutor<TElement>(client);
+            IQueryExecutor<TElement, TElement> queryExecutor = GetExecutor<TElement>(client);
             return queryExecutor.BeginExecuteQuerySegmented(this, token, client, table, modifiedOptions, operationContext, callback, state);
         }
 
         internal TableQuerySegment<TElement> EndExecuteQuerySegmentedInternal(IAsyncResult asyncResult)
         {
-            return Executor.EndExecuteAsync<TableQuerySegment<TElement>>(asyncResult);
+            WrappedAsyncResult<TableQuerySegment<TElement>> wrappedAsyncResult = (WrappedAsyncResult<TableQuerySegment<TElement>>)asyncResult;
+            return wrappedAsyncResult != null ? wrappedAsyncResult.Executor.EndExecute(asyncResult) : Executor.EndExecuteAsync<TableQuerySegment<TElement>>(asyncResult);
         }
 
         internal IEnumerable<TResult> ExecuteInternal<TResult>(CloudTableClient client, CloudTable table, EntityResolver<TResult> resolver, TableRequestOptions requestOptions, OperationContext operationContext)
@@ -508,9 +503,8 @@ namespace Microsoft.WindowsAzure.Storage.Table
             TableRequestOptions modifiedOptions = TableRequestOptions.ApplyDefaults(requestOptions, client);
             operationContext = operationContext ?? new OperationContext();
 
-            RESTCommand<TableQuerySegment<TResult>> cmdToExecute = QueryImpl(this, token, client, table, resolver, modifiedOptions);
-
-            return Executor.ExecuteSync(cmdToExecute, modifiedOptions.RetryPolicy, operationContext);
+            IQueryExecutor<TResult, TElement> queryExecutor = GetExecutor<TResult>(client);
+            return queryExecutor.ExecuteQuerySegmented(this, token, client, table, modifiedOptions, operationContext);
         }
 #endif
 
@@ -522,17 +516,14 @@ namespace Microsoft.WindowsAzure.Storage.Table
             TableRequestOptions modifiedOptions = TableRequestOptions.ApplyDefaults(requestOptions, client);
             operationContext = operationContext ?? new OperationContext();
 
-            return Executor.BeginExecuteAsync(
-                                          QueryImpl(this, token, client, table, resolver, modifiedOptions),
-                                          modifiedOptions.RetryPolicy,
-                                          operationContext,
-                                          callback,
-                                          state);
+            IQueryExecutor<TResult, TElement> queryExecutor = GetExecutor<TResult>(client);
+            return queryExecutor.BeginExecuteQuerySegmented(this, token, client, table, modifiedOptions, operationContext, callback, state);
         }
 
         internal TableQuerySegment<TResult> EndExecuteQuerySegmentedInternal<TResult>(IAsyncResult asyncResult)
         {
-            return Executor.EndExecuteAsync<TableQuerySegment<TResult>>(asyncResult);
+            WrappedAsyncResult<TableQuerySegment<TResult>> wrappedAsyncResult = (WrappedAsyncResult<TableQuerySegment<TResult>>)asyncResult;
+            return wrappedAsyncResult != null ? wrappedAsyncResult.Executor.EndExecute(asyncResult) : Executor.EndExecuteAsync<TableQuerySegment<TResult>>(asyncResult);
         }
 
         internal RESTCommand<TableQuerySegment<RESULT_TYPE>> QueryImpl<T, RESULT_TYPE>(TableQuery<T> query, TableContinuationToken token, CloudTableClient client, CloudTable table, EntityResolver<RESULT_TYPE> resolver, TableRequestOptions requestOptions)
@@ -581,11 +572,11 @@ namespace Microsoft.WindowsAzure.Storage.Table
 
         #endregion
 
-        private static IQueryExecutor<TElement> GetExecutor<TElement>(CloudTableClient client)
+        private static IQueryExecutor<TResult, TElement> GetExecutor<TResult>(CloudTableClient client)
         {
             return client.IsStellarEndpoint()
-                ? (IQueryExecutor<TElement>)new StellarQueryExecutor<TElement>()
-                : (IQueryExecutor<TElement>)new TableQueryExecutor<TElement>();
+                ? (IQueryExecutor<TResult, TElement>)new StellarQueryExecutor<TResult, TElement>()
+                : (IQueryExecutor<TResult, TElement>)new TableQueryExecutor<TResult, TElement>();
         }
     }
 }
