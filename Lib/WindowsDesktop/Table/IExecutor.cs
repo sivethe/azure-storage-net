@@ -19,18 +19,42 @@ namespace Microsoft.WindowsAzure.Storage.Table
 {
     using System;
 
-    internal interface IQueryExecutor<TElement>
+    internal interface IExecutor<TResult>
     {
-        TableQuerySegment<TElement> ExecuteQuerySegmentedInternal(
-            TableQuery<TElement> query,
-            TableContinuationToken token, 
+        TResult EndExecute(IAsyncResult asyncResult);
+    }
+
+    internal interface IOperationExecutor<TResult, TOperation> : IExecutor<TResult>
+    {
+        TResult Execute(
+            TOperation operation,
             CloudTableClient client,
-            CloudTable table, 
-            TableRequestOptions requestOptions, 
+            CloudTable table,
+            TableRequestOptions requestOptions,
             OperationContext operationContext);
 
-        ICancellableAsyncResult BeginExecuteQuerySegmentedInternal(
-            TableQuery<TElement> query,
+        ICancellableAsyncResult BeginExecute(
+            TOperation operation,
+            CloudTableClient client,
+            CloudTable table,
+            TableRequestOptions requestOptions,
+            OperationContext operationContext,
+            AsyncCallback callback,
+            object state);
+    }
+
+    internal interface IQueryExecutor<TResult> : IExecutor<TableQuerySegment<TResult>>
+    {
+        TableQuerySegment<TResult> ExecuteQuerySegmented(
+           TableQuery<TResult> query,
+           TableContinuationToken token,
+           CloudTableClient client,
+           CloudTable table,
+           TableRequestOptions requestOptions,
+           OperationContext operationContext);
+
+        ICancellableAsyncResult BeginExecuteQuerySegmented(
+            TableQuery<TResult> query,
             TableContinuationToken token,
             CloudTableClient client,
             CloudTable table,
@@ -38,7 +62,5 @@ namespace Microsoft.WindowsAzure.Storage.Table
             OperationContext operationContext,
             AsyncCallback callback,
             object state);
-
-        TableQuerySegment<TElement> EndExecuteQuerySegmentedInternal(IAsyncResult asyncResult);
     }
 }

@@ -91,15 +91,8 @@ namespace Microsoft.WindowsAzure.Storage.Table
                 throw new InvalidOperationException(SR.BatchExceededMaximumNumberOfOperations);
             }
 
-            if (client.IsStellarEndpoint())
-            {
-                IBatchOperationExecutor operationExecutor = GetBatchOperationExecutor(client);
-                return operationExecutor.Execute(this, client, table, requestOptions, operationContext);
-            }
-            else
-            {
-                return Executor.ExecuteSync(BatchImpl(this, client, table, modifiedOptions), modifiedOptions.RetryPolicy, operationContext);
-            }
+            IOperationExecutor<IList<TableResult>, TableBatchOperation> operationExecutor = GetExecutor(client);
+            return operationExecutor.Execute(this, client, table, modifiedOptions, operationContext);
         }
 #endif
 
@@ -121,29 +114,17 @@ namespace Microsoft.WindowsAzure.Storage.Table
                 throw new InvalidOperationException(SR.BatchExceededMaximumNumberOfOperations);
             }
 
-            if (client.IsStellarEndpoint())
-            {
-                IBatchOperationExecutor operationExecutor = GetBatchOperationExecutor(client);
-                return operationExecutor.BeginExecute(this, client, table, requestOptions, operationContext, callback, state);
-            }
-            else
-            {
-                return Executor.BeginExecuteAsync(
-                    BatchImpl(this, client, table, modifiedOptions),
-                    modifiedOptions.RetryPolicy,
-                    operationContext,
-                    callback,
-                    state);
-            }
+            IOperationExecutor<IList<TableResult>, TableBatchOperation> operationExecutor = GetExecutor(client);
+            return operationExecutor.BeginExecute(this, client, table, modifiedOptions, operationContext, callback, state);
         }
 
         internal static IList<TableResult> EndExecute(IAsyncResult asyncResult)
         {
-            WrappedAsyncResult<IList<TableResult>, IBatchOperationExecutor> wrappedAsyncResult = (WrappedAsyncResult<IList<TableResult>, IBatchOperationExecutor>)asyncResult;
+            WrappedAsyncResult<IList<TableResult>> wrappedAsyncResult = (WrappedAsyncResult<IList<TableResult>>)asyncResult;
             return wrappedAsyncResult != null ? wrappedAsyncResult.Executor.EndExecute(asyncResult) : Executor.EndExecuteAsync<IList<TableResult>>(asyncResult);
         }
 
-        private static RESTCommand<IList<TableResult>> BatchImpl(TableBatchOperation batch, CloudTableClient client, CloudTable table, TableRequestOptions requestOptions)
+        internal static RESTCommand<IList<TableResult>> BatchImpl(TableBatchOperation batch, CloudTableClient client, CloudTable table, TableRequestOptions requestOptions)
         {
             RESTCommand<IList<TableResult>> batchCmd = new RESTCommand<IList<TableResult>>(client.Credentials, client.StorageUri);
             requestOptions.ApplyToStorageCommand(batchCmd);
@@ -168,14 +149,11 @@ namespace Microsoft.WindowsAzure.Storage.Table
             return batchCmd;
         }
 
-        private static IBatchOperationExecutor GetBatchOperationExecutor(CloudTableClient client)
+        private static IOperationExecutor<IList<TableResult>, TableBatchOperation> GetExecutor(CloudTableClient client)
         {
-            if (client.IsStellarEndpoint())
-            {
-                return new StellarBatchExecutor();
-            }
-
-            throw new InvalidOperationException("BatchOperatorExecutor is not defined for native table accounts");
+            return client.IsStellarEndpoint() 
+                ? (IOperationExecutor<IList<TableResult>, TableBatchOperation>)new StellarBatchExecutor() 
+                : (IOperationExecutor<IList<TableResult>, TableBatchOperation>)new TableBatchOperationExecutor();
         }
     }
 }

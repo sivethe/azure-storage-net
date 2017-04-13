@@ -453,16 +453,9 @@ namespace Microsoft.WindowsAzure.Storage.Table
             CommonUtility.AssertNotNullOrEmpty("tableName", table.Name);
             TableRequestOptions modifiedOptions = TableRequestOptions.ApplyDefaults(requestOptions, client);
             operationContext = operationContext ?? new OperationContext();
-
-            if (client.IsStellarEndpoint())
-            {
-                return this.QueryExecutor.ExecuteQuerySegmentedInternal(this, token, client, table, requestOptions, operationContext);
-            }
-            else
-            {
-                RESTCommand<TableQuerySegment<TElement>> cmdToExecute = QueryImpl(this, token, client, table, EntityUtilities.ResolveEntityByType<TElement>, modifiedOptions);
-                return Executor.ExecuteSync(cmdToExecute, modifiedOptions.RetryPolicy, operationContext);
-            }
+            
+            IQueryExecutor<TElement> queryExecutor = GetExecutor<TElement>(client);
+            return queryExecutor.ExecuteQuerySegmented(this, token, client, table, modifiedOptions, operationContext);
         } 
 #endif
 
@@ -473,19 +466,8 @@ namespace Microsoft.WindowsAzure.Storage.Table
             TableRequestOptions modifiedOptions = TableRequestOptions.ApplyDefaults(requestOptions, client);
             operationContext = operationContext ?? new OperationContext();
 
-            if (client.IsStellarEndpoint())
-            {
-                return this.QueryExecutor.BeginExecuteQuerySegmentedInternal(this, token, client, table, requestOptions, operationContext, callback, state);
-            }
-            else
-            {
-                return Executor.BeginExecuteAsync(
-                                          QueryImpl(this, token, client, table, EntityUtilities.ResolveEntityByType<TElement>, modifiedOptions),
-                                          modifiedOptions.RetryPolicy,
-                                          operationContext,
-                                          callback,
-                                          state);
-            }
+            IQueryExecutor<TElement> queryExecutor = GetExecutor<TElement>(client);
+            return queryExecutor.BeginExecuteQuerySegmented(this, token, client, table, modifiedOptions, operationContext, callback, state);
         }
 
         internal TableQuerySegment<TElement> EndExecuteQuerySegmentedInternal(IAsyncResult asyncResult)
@@ -553,7 +535,7 @@ namespace Microsoft.WindowsAzure.Storage.Table
             return Executor.EndExecuteAsync<TableQuerySegment<TResult>>(asyncResult);
         }
 
-        private static RESTCommand<TableQuerySegment<RESULT_TYPE>> QueryImpl<T, RESULT_TYPE>(TableQuery<T> query, TableContinuationToken token, CloudTableClient client, CloudTable table, EntityResolver<RESULT_TYPE> resolver, TableRequestOptions requestOptions)
+        internal RESTCommand<TableQuerySegment<RESULT_TYPE>> QueryImpl<T, RESULT_TYPE>(TableQuery<T> query, TableContinuationToken token, CloudTableClient client, CloudTable table, EntityResolver<RESULT_TYPE> resolver, TableRequestOptions requestOptions)
         {
             requestOptions.AssertPolicyIfRequired();
 
@@ -598,5 +580,12 @@ namespace Microsoft.WindowsAzure.Storage.Table
         }
 
         #endregion
+
+        private static IQueryExecutor<TElement> GetExecutor<TElement>(CloudTableClient client)
+        {
+            return client.IsStellarEndpoint()
+                ? (IQueryExecutor<TElement>)new StellarQueryExecutor<TElement>()
+                : (IQueryExecutor<TElement>)new TableQueryExecutor<TElement>();
+        }
     }
 }

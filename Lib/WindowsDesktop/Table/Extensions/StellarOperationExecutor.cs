@@ -28,7 +28,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
     using Microsoft.WindowsAzure.Storage.Table.Extension;
     using Microsoft.WindowsAzure.Storage.Table.Protocol;
 
-    internal sealed class StellarOperationExecutor : IOperationExecutor
+    internal sealed class StellarOperationExecutor : IOperationExecutor<TableResult, TableOperation>
     {
         public TableResult Execute(
             TableOperation operation,
@@ -50,7 +50,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
             AsyncCallback callback, 
             object state)
         {
-            return new WrappedAsyncResult<TableResult, IOperationExecutor>(
+            return new WrappedAsyncResult<TableResult>(
                 t => ExecuteAsync(operation, client, table, requestOptions, operationContext), 
                 this,
                 callback, 
@@ -61,7 +61,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
         {
             try
             {
-                return ((WrappedAsyncResult<TableResult, IOperationExecutor>)asyncResult).Result;
+                return ((WrappedAsyncResult<TableResult>)asyncResult).Result;
             }
             catch (AggregateException ex)
             {

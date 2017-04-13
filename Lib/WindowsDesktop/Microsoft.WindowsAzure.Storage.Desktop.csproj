@@ -101,9 +101,10 @@
     <Compile Include="Table\Extensions\CloudTableExtensions.cs" />
     <Compile Include="Table\Extensions\TableErrorCodeMessageString.cs" />
     <Compile Include="Table\Extensions\WrappedAsyncResult.cs" />
-    <Compile Include="Table\IBatchOperationExecutor.cs" />
-    <Compile Include="Table\IOperationExecutor.cs" />
-    <Compile Include="Table\IQueryExecutor.cs" />
+    <Compile Include="Table\IExecutor.cs" />
+    <Compile Include="Table\TableBatchOperationExecutor.cs" />
+    <Compile Include="Table\TableOperationExecutor.cs" />
+    <Compile Include="Table\TableQueryExecutor.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\ClassLibraryCommon\ICancellableAsyncResult.cs" />

@@ -15,15 +15,13 @@
 // </copyright>
 // -----------------------------------------------------------------------------------------
 
-using System.Runtime.ExceptionServices;
-
 namespace Microsoft.WindowsAzure.Storage.Table.Extensions
 {
     using System;
     using System.Collections.Generic;
     using System.Linq;
     using System.Net;
-    using System.Threading;
+    using System.Runtime.ExceptionServices;
     using System.Threading.Tasks;
     using Microsoft.Azure.Documents;
     using Microsoft.Azure.Documents.Client;
@@ -31,7 +29,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
     using Microsoft.WindowsAzure.Storage.Table.Extension;
     using Newtonsoft.Json.Linq;
 
-    internal sealed class StellarBatchExecutor : IBatchOperationExecutor
+    internal sealed class StellarBatchExecutor : IOperationExecutor<IList<TableResult>, TableBatchOperation>
     {
         private const string BulkInsertOrMergeOrUpdate = "BulkInsertOrMergeOrUpdate";
 
@@ -55,7 +53,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
             AsyncCallback callback, 
             object state)
         {
-            return new WrappedAsyncResult<IList<TableResult>, IBatchOperationExecutor>(
+            return new WrappedAsyncResult<IList<TableResult>>(
                 t => ExecuteAsync(batchOperation, client, table, requestOptions, operationContext),
                 this,
                 callback,
@@ -66,7 +64,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
         {
             try
             {
-                return ((WrappedAsyncResult<IList<TableResult>, IBatchOperationExecutor>)asyncResult).Result;
+                return ((WrappedAsyncResult<IList<TableResult>>)asyncResult).Result;
             }
             catch (AggregateException ex)
             {

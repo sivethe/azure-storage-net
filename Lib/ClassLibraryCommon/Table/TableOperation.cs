@@ -42,15 +42,8 @@ namespace Microsoft.WindowsAzure.Storage.Table
             operationContext = operationContext ?? new OperationContext();
             CommonUtility.AssertNotNullOrEmpty("tableName", table.Name);
 
-            if (client.IsStellarEndpoint())
-            {
-                IOperationExecutor operationExecutor = GetOperationExecutor(client);
-                return operationExecutor.Execute(this, client, table, requestOptions, operationContext);
-            }
-            else
-            {
-                return Executor.ExecuteSync(this.GenerateCMDForOperation(client, table, modifiedOptions), modifiedOptions.RetryPolicy, operationContext);
-            }
+            IOperationExecutor<TableResult, TableOperation> operationExecutor = GetExecutor(client);
+            return operationExecutor.Execute(this, client, table, modifiedOptions, operationContext);
         }
 #endif
 
@@ -62,25 +55,13 @@ namespace Microsoft.WindowsAzure.Storage.Table
 
             CommonUtility.AssertNotNullOrEmpty("tableName", table.Name);
 
-            if (client.IsStellarEndpoint())
-            {
-                IOperationExecutor operationExecutor = GetOperationExecutor(client);
-                return operationExecutor.BeginExecute(this, client, table, requestOptions, operationContext, callback, state);
-            }
-            else
-            {
-                return Executor.BeginExecuteAsync(
-                                          this.GenerateCMDForOperation(client, table, modifiedOptions),
-                                          modifiedOptions.RetryPolicy,
-                                          operationContext,
-                                          callback,
-                                          state);
-            }
+            IOperationExecutor<TableResult, TableOperation> operationExecutor = GetExecutor(client);
+            return operationExecutor.BeginExecute(this, client, table, modifiedOptions, operationContext, callback, state);
         }
 
         internal static TableResult EndExecute(IAsyncResult asyncResult)
         {
-            WrappedAsyncResult<TableResult, IOperationExecutor> wrappedAsyncResult = (WrappedAsyncResult<TableResult, IOperationExecutor>)asyncResult;
+            WrappedAsyncResult<TableResult> wrappedAsyncResult = (WrappedAsyncResult<TableResult>)asyncResult;
             return wrappedAsyncResult != null ? wrappedAsyncResult.Executor.EndExecute(asyncResult) : Executor.EndExecuteAsync<TableResult>(asyncResult);
         }
 
@@ -288,14 +269,11 @@ namespace Microsoft.WindowsAzure.Storage.Table
             }
         }
 
-        private static IOperationExecutor GetOperationExecutor(CloudTableClient client)
+        private static IOperationExecutor<TableResult, TableOperation> GetExecutor(CloudTableClient client)
         {
-            if (client.IsStellarEndpoint())
-            {
-                return new StellarOperationExecutor();
-            }
-
-            throw new InvalidOperationException("OperatorExecutor is not defined for native table accounts");
+            return client.IsStellarEndpoint()
+                ? (IOperationExecutor<TableResult, TableOperation>)new StellarOperationExecutor()
+                : (IOperationExecutor<TableResult, TableOperation>)new TableOperationExecutor();
         }
     }
 }

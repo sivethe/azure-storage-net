@@ -206,8 +206,8 @@ namespace Microsoft.WindowsAzure.Storage.Table
         /// <returns>A enumerable collection of type <see cref="TableResult"/> that contains the results, in order, of each operation in the <see cref="TableBatchOperation"/> on the table.</returns>
         public virtual IList<TableResult> EndExecuteBatch(IAsyncResult asyncResult)
         {
-            WrappedAsyncResult<IList<TableResult>, IBatchOperationExecutor> wrappedAsyncResult
-                = asyncResult as WrappedAsyncResult<IList<TableResult>, IBatchOperationExecutor>;
+            WrappedAsyncResult<IList<TableResult>> wrappedAsyncResult
+                = asyncResult as WrappedAsyncResult<IList<TableResult>>;
             return wrappedAsyncResult != null 
                 ? wrappedAsyncResult.Executor.EndExecute(asyncResult) 
                 : Executor.EndExecuteAsync<IList<TableResult>>(asyncResult);
@@ -1133,8 +1133,8 @@ namespace Microsoft.WindowsAzure.Storage.Table
         /// <param name="asyncResult">An <see cref="IAsyncResult"/> that references the pending asynchronous operation.</param>
         public virtual void EndCreate(IAsyncResult asyncResult)
         {
-            WrappedAsyncResult<TableResult, IOperationExecutor> wrappedAsyncResult 
-                = asyncResult as WrappedAsyncResult<TableResult, IOperationExecutor>;
+            WrappedAsyncResult<TableResult> wrappedAsyncResult
+                = asyncResult as WrappedAsyncResult<TableResult>;
             if (wrappedAsyncResult != null)
             {
                 wrappedAsyncResult.Executor.EndExecute(asyncResult);
@@ -1422,8 +1422,8 @@ namespace Microsoft.WindowsAzure.Storage.Table
         /// <param name="asyncResult">An <see cref="IAsyncResult"/> that references the pending asynchronous operation.</param>
         public virtual void EndDelete(IAsyncResult asyncResult)
         {
-            WrappedAsyncResult<TableResult, IOperationExecutor> wrappedAsyncResult
-                = asyncResult as WrappedAsyncResult<TableResult, IOperationExecutor>;
+            WrappedAsyncResult<TableResult> wrappedAsyncResult
+                = asyncResult as WrappedAsyncResult<TableResult>;
             if (wrappedAsyncResult != null)
             {
                 wrappedAsyncResult.Executor.EndExecute(asyncResult);
@@ -1822,8 +1822,8 @@ namespace Microsoft.WindowsAzure.Storage.Table
         /// <returns><c>true</c> if table exists; otherwise, <c>false</c>.</returns>
         public virtual bool EndExists(IAsyncResult asyncResult)
         {
-            WrappedAsyncResult<TableResult, IOperationExecutor> wrappedAsyncResult
-                = asyncResult as WrappedAsyncResult<TableResult, IOperationExecutor>;
+            WrappedAsyncResult<TableResult> wrappedAsyncResult
+                = asyncResult as WrappedAsyncResult<TableResult>;
 
             TableResult res = wrappedAsyncResult != null 
                 ? wrappedAsyncResult.Executor.EndExecute(asyncResult) 

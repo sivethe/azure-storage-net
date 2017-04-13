@@ -28,7 +28,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
 
     internal sealed class StellarQueryExecutor<TElement> : IQueryExecutor<TElement>
     {
-        public TableQuerySegment<TElement> ExecuteQuerySegmentedInternal(
+        public TableQuerySegment<TElement> ExecuteQuerySegmented(
             TableQuery<TElement> query,
             TableContinuationToken token, 
             CloudTableClient client, 
@@ -40,7 +40,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
             return this.ExecuteQuerySegmentedInternalAsync(query, token, client, table, requestOptions, operationContext).GetAwaiter().GetResult();
         }
 
-        public ICancellableAsyncResult BeginExecuteQuerySegmentedInternal(
+        public ICancellableAsyncResult BeginExecuteQuerySegmented(
             TableQuery<TElement> query,
             TableContinuationToken token,
             CloudTableClient client,
@@ -50,18 +50,18 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
             AsyncCallback callback,
             object state)
         {
-            return new WrappedAsyncResult<TableQuerySegment<TElement>, IQueryExecutor<TElement>>(
+            return new WrappedAsyncResult<TableQuerySegment<TElement>>(
                 t => ExecuteQuerySegmentedInternalAsync(query, token, client, table, requestOptions, operationContext),
                 this,
                 callback, 
                 state);
         }
 
-        public TableQuerySegment<TElement> EndExecuteQuerySegmentedInternal(IAsyncResult asyncResult)
+        public TableQuerySegment<TElement> EndExecute(IAsyncResult asyncResult)
         {
             try
             {
-                return ((WrappedAsyncResult<TableQuerySegment<TElement>, IQueryExecutor<TElement>>)asyncResult).Result;
+                return ((WrappedAsyncResult<TableQuerySegment<TElement>>)asyncResult).Result;
             }
             catch (AggregateException ex)
             {

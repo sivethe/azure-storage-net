@@ -27,8 +27,8 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
     /// TODO: This should be combined with CancellableAsyncResultTaskWrapper<> by extending it to support executor model
     /// </summary>
     /// <typeparam name="TResult">The return type of the operation to wrap</typeparam>
-    /// <typeparam name="TExecutor">The type of executor depending on the backend</typeparam>
-    internal class WrappedAsyncResult<TResult, TExecutor> : CancellableAsyncResultTaskWrapper
+    /// <typeparam name="TOperation">The operation generating the result</typeparam>
+    internal class WrappedAsyncResult<TResult> : CancellableAsyncResultTaskWrapper
     {
         /// <summary>
         /// Creates a new ICancellableAsyncResult Task&lt;TResult&gt; wrapper object.
@@ -38,7 +38,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
         /// <param name="state">A user-defined object that will be passed to the callback delegate.</param>
         public WrappedAsyncResult(
             Func<CancellationToken, Task<TResult>> generateTask, 
-            TExecutor executor, 
+            IExecutor<TResult> executor, 
             AsyncCallback callback, 
             Object state) 
             : base()
@@ -57,7 +57,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
             this.internalAsyncResult = generateTask(cancellationTokenSource.Token).AsApm(newCallback, state);
         }
 
-        internal TExecutor Executor { get; private set; }
+        internal IExecutor<TResult> Executor { get; private set; }
 
         internal TResult Result
         {
