@@ -58,7 +58,7 @@ namespace Microsoft.WindowsAzure.Storage.Table
         public bool IsStellarEndpoint()
         {
             // TODO:  Fix this 
-            string absoluteUri = this.StorageUri.PrimaryUri.AbsolutePath;
+            string absoluteUri = this.StorageUri.PrimaryUri.OriginalString;
             return absoluteUri.Contains("localhost") || absoluteUri.Contains("documents.azure.com");
         }
 

@@ -78,30 +78,39 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
             TableRequestOptions requestOptions,
             OperationContext operationContext)
         {
+            TableResult result = null;
+
             try
             {
                 switch (operation.OperationType)
                 {
                     case TableOperationType.Insert:
-                        return await this.HandleInsertAsync(operation, client, table, requestOptions, operationContext);
+                        result = await this.HandleInsertAsync(operation, client, table, requestOptions, operationContext);
+                        break;
 
                     case TableOperationType.InsertOrMerge:
-                        return await this.HandleInsertOrMergeAsync(operation, client, table, requestOptions, operationContext);
+                        result = await this.HandleInsertOrMergeAsync(operation, client, table, requestOptions, operationContext);
+                        break;
 
                     case TableOperationType.Merge:
-                        return await this.HandleMergeAsync(operation, client, table, requestOptions, operationContext);
+                        result = await this.HandleMergeAsync(operation, client, table, requestOptions, operationContext);
+                        break;
 
                     case TableOperationType.Delete:
-                        return await this.HandleDeleteAsync(operation, client, table, requestOptions, operationContext);
+                        result = await this.HandleDeleteAsync(operation, client, table, requestOptions, operationContext);
+                        break;
 
                     case TableOperationType.InsertOrReplace:
-                        return await this.HandleUpsertAsync(operation, client, table, requestOptions, operationContext);
+                        result = await this.HandleUpsertAsync(operation, client, table, requestOptions, operationContext);
+                        break;
 
                     case TableOperationType.Replace:
-                        return await this.HandleReplaceAsync(operation, client, table, requestOptions, operationContext);
+                        result = await this.HandleReplaceAsync(operation, client, table, requestOptions, operationContext);
+                        break;
 
                     case TableOperationType.Retrieve:
-                        return await this.HandleReadAsync(operation, client, table, requestOptions, operationContext);
+                        result = await this.HandleReadAsync(operation, client, table, requestOptions, operationContext);
+                        break;
 
                     default:
                         throw new NotSupportedException();
@@ -109,8 +118,14 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
             }
             catch (Exception ex)
             {
-                throw EntityHelpers.GetTableResultFromException(ex, operation);
+                StorageException storageException = EntityHelpers.GetTableResultFromException(ex, operation);
+                operationContext.RequestResults.Add(storageException.RequestInformation);
+
+                throw storageException;
             }
+
+            operationContext.FireRequestCompleted(new RequestEventArgs(operationContext.LastResult));
+            return result;
         }
 
         private async Task<TableResult> HandleInsertOrMergeAsync(
@@ -125,6 +140,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
             try
             {
                 ResourceResponse<Document> response = await client.DocumentClient.CreateDocumentAsync(table.GetCollectionUri(), document);
+                context.RequestResults.Add(response.ToRequestResult());
                 return this.GetTableResultFromResponse(operation, response, context, options);
             }
             catch (DocumentClientException exception)
@@ -163,6 +179,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
                             PartitionKey = new PartitionKeyDefinition() { Paths = { "/" + StellarConstants.PartitionKeyPropertyName } },
 
                         }, requestOptions);
+                context.RequestResults.Add(response.ToRequestResult());
                 return EntityHelpers.GetTableResultFromResponse(response, context);
             }
             else
@@ -170,7 +187,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
                 Document document = EntityHelpers.GetDocumentFromEntity(operation.Entity, context, options);
 
                 ResourceResponse<Document> response = await client.DocumentClient.CreateDocumentAsync(table.GetCollectionUri(), document);
-
+                context.RequestResults.Add(response.ToRequestResult());
                 return this.GetTableResultFromResponse(operation, response, context, options);
             }
         }
@@ -179,6 +196,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
         {
             Document document = EntityHelpers.GetDocumentFromEntity(operation.Entity, context, options);
             ResourceResponse<Document> response = await client.DocumentClient.UpsertDocumentAsync(table.GetCollectionUri(), document);
+            context.RequestResults.Add(response.ToRequestResult());
             return this.GetTableResultFromResponse(operation, response, context, options);
         }
 
@@ -193,6 +211,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
             }
 
             ResourceResponse<Document> response = await client.DocumentClient.ReplaceDocumentAsync(documentUri, document, requestOptions);
+            context.RequestResults.Add(response.ToRequestResult());
             return this.GetTableResultFromResponse(operation, response, context, options);
         }
 
@@ -203,6 +222,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
                 string collectionName = ((DynamicTableEntity)operation.Entity).Properties[TableConstants.TableName].StringValue;
                 Uri documentCollectionUri = UriFactory.CreateDocumentCollectionUri(StellarConstants.TableDatabaseName, collectionName);
                 ResourceResponse<DocumentCollection> response = await client.DocumentClient.DeleteDocumentCollectionAsync(documentCollectionUri);
+                context.RequestResults.Add(response.ToRequestResult());
                 return EntityHelpers.GetTableResultFromResponse(response, context);
             }
             else
@@ -210,6 +230,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
                 RequestOptions requestOptions;
                 Uri documentUri = this.GetDocumentUri(operation, table, out requestOptions);
                 ResourceResponse<Document> response = await client.DocumentClient.DeleteDocumentAsync(documentUri, requestOptions);
+                context.RequestResults.Add(response.ToRequestResult());
                 return this.GetTableResultFromResponse(operation, response, context, options);
             }
         }
@@ -224,7 +245,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
                     string collectionName = ((DynamicTableEntity)operation.Entity).Properties[TableConstants.TableName].StringValue;
                     Uri documentCollectionUri = UriFactory.CreateDocumentCollectionUri(StellarConstants.TableDatabaseName, collectionName);
                     ResourceResponse<DocumentCollection> response = await client.DocumentClient.ReadDocumentCollectionAsync(documentCollectionUri);
-
+                    context.RequestResults.Add(response.ToRequestResult());
                     return EntityHelpers.GetTableResultFromResponse(response, context);
                 }
                 else
@@ -233,6 +254,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
                     Uri documentUri = this.GetDocumentUri(operation, table, out requestOptions);
 
                     ResourceResponse<Document> response = await client.DocumentClient.ReadDocumentAsync(documentUri, requestOptions);
+                    context.RequestResults.Add(response.ToRequestResult());
                     return this.GetTableResultFromResponse(operation, response, context, options);
                 }
             }
@@ -276,6 +298,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
                         }
                 });
 
+            context.RequestResults.Add(updateResponse.ToRequestResult());
             return this.GetTableResultFromResponse(operation, updateResponse, context, options);
         }
 

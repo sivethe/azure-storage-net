@@ -176,5 +176,14 @@ namespace Microsoft.WindowsAzure.Storage.Table.Protocol
         /// The required host information is not present in the request. You must send a non-empty Host header or include the absolute URI in the request line.
         /// </summary>
         public static readonly string HostInformationNotPresent = "HostInformationNotPresent";
+
+        #region "Error Code from Service"
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public static readonly string ResourceNotFound = "ResourceNotFound";
+
+        #endregion
     }
 }

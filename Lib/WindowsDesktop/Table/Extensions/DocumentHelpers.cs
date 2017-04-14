@@ -67,8 +67,8 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
                     case HttpStatusCode.NotFound:
                         if (tableOperation != null && tableOperation.IsTableEntity)
                         {
-                            reqResult.ExtendedErrorInformation.ErrorCode = TableErrorCodeStrings.TableNotFound;
-                            reqResult.ExtendedErrorInformation.ErrorMessage = TableErrorCodeMessageStrings.TableNotFoundMessage;
+                            reqResult.ExtendedErrorInformation.ErrorCode = TableErrorCodeStrings.ResourceNotFound;
+                            reqResult.ExtendedErrorInformation.ErrorMessage = TableErrorCodeMessageStrings.ResourceNotFoundMessage;
                         }
                         else
                         {

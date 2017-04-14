@@ -35,5 +35,7 @@ namespace Microsoft.WindowsAzure.Storage.Table.Extensions
         public static readonly string EntityTooLargeMessage = "The entity is larger than the maximum size permitted.";
 
         public static readonly string InternalServerError = "Server encountered an internal error.Please try again after some time.";
+
+        public static readonly string ResourceNotFoundMessage = "The specified resource does not exist.";
     }
 }

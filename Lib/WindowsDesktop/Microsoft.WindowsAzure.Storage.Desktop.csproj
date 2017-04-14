@@ -94,6 +94,7 @@
     <Compile Include="Table\Extensions\Entity\TableEntityWriter.cs" />
     <Compile Include="Table\Extensions\Entity\TableEntityWriterContext.cs" />
     <Compile Include="Table\Extensions\Entity\Util.cs" />
+    <Compile Include="Table\Extensions\OperationContextExtensions.cs" />
     <Compile Include="Table\Extensions\StellarBatchExecutor.cs" />
     <Compile Include="Table\Extensions\StellarConstants.cs" />
     <Compile Include="Table\Extensions\StellarOperationExecutor.cs" />
